@@ -2,6 +2,7 @@ package com.rest.webservices.restfulwebservices.controller;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Optional;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
@@ -22,6 +23,7 @@ import com.rest.webservices.restfulwebservices.exception.UserNotFoundException;
 import com.rest.webservices.restfulwebservices.helloworld.HelloWorldBean;
 import com.rest.webservices.restfulwebservices.user.User;
 import com.rest.webservices.restfulwebservices.user.UserDAOService;
+import com.rest.webservices.restfulwebservices.user.UserRepository;
 
 @RestController
 public class OneForAllController {
@@ -29,6 +31,8 @@ public class OneForAllController {
 	@Resource
 	private UserDAOService userDAOService;
 	
+	@Autowired
+	private UserRepository userRepository;
 	
 	// Hello World
 	@GetMapping(path = "/")
@@ -57,6 +61,11 @@ public class OneForAllController {
 		return userDAOService.getUsers();
 	}
 	
+	@GetMapping(path = "/jpa/users")
+	public List<User> jpaGetUsers() {
+		return userRepository.findAll();
+	}
+	
 	@GetMapping(path = "/users/{id}")
 	public User getUserById(@PathVariable int id) {
 		User u = userDAOService.getUser(id);
@@ -65,6 +74,19 @@ public class OneForAllController {
 		}
 		return u;
 	}
+	
+	
+	@GetMapping(path = "/jpa/users/{id}")
+	public User jpaGetUserById(@PathVariable int id) {
+		Optional<User> u = userRepository.findById(id);
+		if(!u.isPresent()) {
+			throw new UserNotFoundException(String.format("user %d is not found", id));
+		}
+		
+		return u.get();
+	}
+	
+	
 	
 	@PostMapping(path = "/users")
 	public ResponseEntity<User> saveNewUser(@Valid @RequestBody User u) {
