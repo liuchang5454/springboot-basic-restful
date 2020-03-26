@@ -87,12 +87,26 @@ public class OneForAllController {
 	}
 	
 	
-	
 	@PostMapping(path = "/users")
 	public ResponseEntity<User> saveNewUser(@Valid @RequestBody User u) {
 		User savedUser = userDAOService.saveUser(u);
 		return new ResponseEntity<User>(savedUser, HttpStatus.CREATED);
 	}
+	
+	@PostMapping("/jpa/users")
+	public ResponseEntity<User> jpaSaveNewUser(@Valid @RequestBody User u) {
+		User savedUser = userRepository.save(u);
+		
+		URI location = ServletUriComponentsBuilder
+				.fromCurrentRequest()
+				.path("/{id}")
+				.buildAndExpand(savedUser.getId())
+				.toUri();
+		
+		return ResponseEntity.created(location).build();
+	}
+	
+	
 	
 	@DeleteMapping("/users/{id}")
 	public ResponseEntity<User> deleteUserById(@PathVariable int id) {
@@ -103,6 +117,11 @@ public class OneForAllController {
 			User deletedUser = userDAOService.deleteUser(u);
 			return new ResponseEntity<User>(deletedUser, HttpStatus.OK);
 		}
+	}
+	
+	@DeleteMapping("/jpa/users/{id}")
+	public void jpaDeleteUserById(@PathVariable int id) {
+		userRepository.deleteById(id);
 	}
 	
 }
