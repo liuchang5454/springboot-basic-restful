@@ -21,6 +21,8 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.rest.webservices.restfulwebservices.exception.UserNotFoundException;
 import com.rest.webservices.restfulwebservices.helloworld.HelloWorldBean;
+import com.rest.webservices.restfulwebservices.user.Post;
+import com.rest.webservices.restfulwebservices.user.PostRepository;
 import com.rest.webservices.restfulwebservices.user.User;
 import com.rest.webservices.restfulwebservices.user.UserDAOService;
 import com.rest.webservices.restfulwebservices.user.UserRepository;
@@ -33,6 +35,9 @@ public class OneForAllController {
 	
 	@Autowired
 	private UserRepository userRepository;
+	
+	@Autowired
+	private PostRepository postRepository;
 	
 	// Hello World
 	@GetMapping(path = "/")
@@ -122,6 +127,43 @@ public class OneForAllController {
 	@DeleteMapping("/jpa/users/{id}")
 	public void jpaDeleteUserById(@PathVariable int id) {
 		userRepository.deleteById(id);
+	}
+	
+	
+	
+	
+	@GetMapping("/jpa/users/{id}/posts")
+	public List<Post> retrieveAllUsers(@PathVariable int id) {
+		Optional<User> userOptional = userRepository.findById(id);
+		
+		if(!userOptional.isPresent()) {
+			throw new UserNotFoundException("id-" + id);
+		}
+		
+		return userOptional.get().getPosts();
+	}
+
+
+	@PostMapping("/jpa/users/{id}/posts")
+	public ResponseEntity<Object> createPost(@PathVariable int id, @RequestBody Post post) {
+		
+		Optional<User> userOptional = userRepository.findById(id);
+		
+		if(!userOptional.isPresent()) {
+			throw new UserNotFoundException("id-" + id);
+		}
+
+		User user = userOptional.get();
+		
+		post.setUser(user);
+		
+		postRepository.save(post);
+		
+		URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(post.getId())
+				.toUri();
+
+		return ResponseEntity.created(location).build();
+
 	}
 	
 }
